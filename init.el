@@ -20,3 +20,5 @@
 
 (add-hook 'emacs-startup-hook 'toggle-frame-maximized)
 
+(add-to-list 'custom-theme-load-path "~/.emacs.d/themes/")
+(load-theme 'zenburn t)
