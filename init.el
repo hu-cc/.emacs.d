@@ -5,10 +5,14 @@
 
 
 ;; Preferences
+(prefer-coding-system 'utf-8)
+
 (setq inhibit-startup-screen t)
 
 (tool-bar-mode -1)
 (scroll-bar-mode -1)
+
+(global-hl-line-mode 1)
 
 (setq ring-bell-function 'ignore)
 
@@ -19,6 +23,8 @@
       kept-new-versions 20   ; how many of the newest versions to keep
       kept-old-versions 5    ; and how many of the old
       )
+
+(fset 'yes-or-no-p 'y-or-n-p)
 
 ;; Appearance
 
