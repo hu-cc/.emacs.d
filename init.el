@@ -11,7 +11,6 @@
   (package-refresh-contents)
   (package-install 'use-package))
 
-;; TODO: use Org manage config
 ;; The actual config file
 (when (file-readable-p "~/.emacs.d/config.org")
   (org-babel-load-file (expand-file-name "~/.emacs.d/config.org")))
