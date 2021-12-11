@@ -1,0 +1,74 @@
+* Theme
+  #+BEGIN_SRC emacs-lisp
+    (use-package zenburn-theme
+     :ensure t
+     :config
+     (load-theme 'zenburn t))
+  #+END_SRC
+
+* Font
+  #+BEGIN_SRC emacs-lisp
+    (set-frame-font "Fira Code Retina 12" nil t)
+  #+END_SRC
+
+* General Configuration
+
+** Maximize the Emacs Frame on Startup
+   #+BEGIN_SRC emacs-lisp
+     (add-hook 'emacs-startup-hook 'toggle-frame-maximized)
+   #+END_SRC
+
+** Do not show the startup screen
+  #+BEGIN_SRC emacs-lisp
+    (setq inhibit-startup-screen t)
+  #+END_SRC
+  
+** Disable too bar, menu bar, scroll bar
+  #+BEGIN_SRC emacs-lisp
+    (tool-bar-mode -1)
+    (menu-bar-mode -1)
+    (scroll-bar-mode -1)
+  #+END_SRC
+
+** Highlight current line
+  #+BEGIN_SRC emacs-lisp
+    (global-hl-line-mode 1)
+  #+END_SRC
+
+** Disable bell
+  #+BEGIN_SRC emacs-lisp
+    (setq ring-bell-function 'ignore)
+  #+END_SRC
+  
+** Set UTF-8 encoding
+  #+BEGIN_SRC emacs-lisp
+    (setq locale-coding-system 'utf-8)
+    (set-terminal-coding-system 'utf-8)
+    (set-keyboard-coding-system 'utf-8)
+    (set-selection-coding-system 'utf-8)
+    (prefer-coding-system 'utf-8)
+  #+END_SRC
+    
+* Functionality
+
+** Disable backups and auto-saves
+   #+BEGIN_SRC emacs-lisp
+     (setq make-backup-files nil)
+     (setq auto-save-default nil)
+   #+END_SRC
+
+** Change yes-or-no questions into y-or-n questions
+   #+BEGIN_SRC emacs-lisp
+   (defalias 'yes-or-no-p 'y-or-n-p)
+   #+END_SRC
+  
+* Git integration
+
+** magit
+   #+BEGIN_SRC emacs-lisp
+     (use-package magit
+       :ensure t
+       :config
+       :bind (("C-x g" . magit-status)
+	      ("C-x C-g" . magit-status)))
+   #+END_SRC
