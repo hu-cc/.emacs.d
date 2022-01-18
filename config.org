@@ -1,3 +1,5 @@
+#+STARTUP: content
+
 * Theme
   #+BEGIN_SRC emacs-lisp
     (use-package zenburn-theme
@@ -8,7 +10,9 @@
 
 * Font
   #+BEGIN_SRC emacs-lisp
-    (set-frame-font "Fira Code Retina 12" nil t)
+    (set-face-attribute 'default nil :font "Fira Code Retina" :height 110)
+    (set-fontset-font t 'unicode "Symbol" nil 'prepend)
+    (set-fontset-font t '(#x4e00 . #x9fff) "Microsoft Yahei")
   #+END_SRC
 
 * General Configuration
@@ -76,6 +80,22 @@
    #+BEGIN_SRC emacs-lisp
    (defalias 'yes-or-no-p 'y-or-n-p)
    #+END_SRC
+
+** which-key
+
+  #+BEGIN_SRC emacs-lisp
+    (use-package which-key
+      :ensure t
+      :config
+      (which-key-mode))
+  #+END_SRC
+
+* Slime
+  
+  #+BEGIN_SRC emacs-lisp
+    (load (expand-file-name "C:/Users/yawl2u/quicklisp/slime-helper.el"))
+    (setq inferior-lisp-program "sbcl")
+  #+END_SRC
   
 * Git integration
 
@@ -87,3 +107,103 @@
        :bind (("C-x g" . magit-status)
 	      ("C-x C-g" . magit-status)))
    #+END_SRC
+
+* Org
+
+** Activate some Org commands
+   #+BEGIN_SRC emacs-lisp
+;;     (global-set-key (kbd "C-c l") #'org-store-link)
+     (global-set-key (kbd "C-c a") #'org-agenda)
+     (global-set-key (kbd "C-c c") #'org-capture)
+   #+END_SRC
+
+* LSP Mode
+  
+** Setup
+   #+BEGIN_SRC emacs-lisp
+     (use-package lsp-mode
+       :ensure t
+       :defer t
+       :init
+       (setq lsp-keymap-prefix "C-c l")
+       :hook (
+	      (java-mode-hook . lsp-deferred)
+	      (lsp-mode-hook . lsp-enable-which-key-integration))
+       :commands (lsp lsp-deferred)
+       :bind (:map lsp-mode-map
+		   ("M-<RET>" . lsp-execute-code-action)))
+
+     (use-package lsp-ui :commands lsp-ui-mode)
+
+     (use-package lsp-treemacs :commands lsp-treemacs-errors-list)
+
+     (use-package which-key
+       :config
+       (which-key-mode))
+   #+END_SRC
+
+** ui
+   #+BEGIN_SRC emacs-lisp
+(use-package lsp-ui
+  :ensure t
+  :defer t
+  :config
+  (setq lsp-ui-sideline-enable nil)
+  :hook (lsp-mode-hook . lsp-ui-mode)
+  :bind (:map lsp-ui-mode-map
+          ("C-c i" . lsp-ui-imenu)))
+    #+END_SRC
+    
+** LSP integration with treemacs
+   #+BEGIN_SRC emacs-lisp 
+     (use-package lsp-treemacs
+       :ensure t
+       :defer t
+       :after lsp)
+#+END_SRC
+ 
+** Debugger
+    #+BEGIN_SRC emacs-lisp 
+     (use-package dap-mode
+       :ensure t
+       :defer t
+       :after lsp-mode
+       :config
+       (dap-auto-configure-mode)
+       :bind (:map dap-mode-map
+	       ("C-c C-c" . dap-java-debug)
+	       ("C-c R" . dap-java-run-test-class)
+	       ("C-c d" . dap-java-debug-test-method)
+	       ("C-c r" . dap-java-run-test-method)))
+ #+END_SRC
+
+** java
+  
+#+BEGIN_SRC emacs-lisp 
+  (use-package lsp-java
+    :ensure t
+    :defer t
+    :after lsp-mode
+    :init
+    (use-package request :defer t)
+    (setq-default lsp-java-server-install-dir "~/.emacs.d/eclipse.jdt.ls/server/")
+    (setq lsp-java-java-path "D:/softwares/Java/jdk1.8.0_281/jre/bin/java.exe")
+    :config
+    (setq lsp-java-format-on-type-enabled nil)
+    (defun my/java-mode-hook ()
+      (setq c-basic-offset 2
+	    c-label-offset 0
+	    tab-width 2
+	    indent-tabs-mode nil
+	require-final-newline nil))
+    :hook (java-mode-hook . (lsp my/java-mode-hook)))
+
+  ;; Requires dap-mode
+
+  (use-package dap-java
+    :ensure nil
+    :defer t
+    :after (lsp-java))
+   #+END_SRC
+
+   
