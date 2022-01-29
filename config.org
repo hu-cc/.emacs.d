@@ -11,7 +11,7 @@
 * Font
   #+BEGIN_SRC emacs-lisp
     (set-face-attribute 'default nil :font "Fira Code Retina" :height 110)
-    (set-fontset-font t 'unicode "Symbol" nil 'prepend)
+;    (set-fontset-font t 'unicode "Symbol" nil 'prepend)
     (set-fontset-font t '(#x4e00 . #x9fff) "Microsoft Yahei")
   #+END_SRC
 
