@@ -92,6 +92,17 @@
       (which-key-mode))
   #+END_SRC
 
+* Dired
+  [[https://stackoverflow.com/questions/18823742/in-emacs-24-3-1-on-windows-7-how-can-i-group-directories-first-in-dired][link]]
+  #+BEGIN_SRC emacs-lisp
+    (setq ls-lisp-dirs-first t)
+    ; hide the link count, user, and group columns - default is '(links uid gid)
+    (setq ls-lisp-verbosity nil)
+    ; use ISO dates (the first is for recent dates, second for old dates)
+    (setq ls-lisp-format-time-list '("%Y-%m-%d %H:%M" "%Y-%m-%d %H:%M"))
+    (setq ls-lisp-use-localized-time-format t)
+  #+END_SRC
+  
 * Slime
   
   #+BEGIN_SRC emacs-lisp
@@ -134,4 +145,12 @@
 		   (sequence "WAITING(w@/!)" "HOLD(h@/!)" "|" "CANCELLED(c@/!)"))))
      ;; Cannot set a headline to `DONE` if children aren't `DONE`.
      (setq-default org-enforce-to-dependencies t)
+   #+END_SRC
+
+** Week-agenda view
+   a week view spanning the current day. [[https://stackoverflow.com/questions/32423127/how-to-view-the-next-days-in-org-modes-agenda][link]]
+   #+BEGIN_SRC emacs-lisp
+     (setq org-agenda-span 10
+	   org-agenda-start-on-weekday nil
+	   org-agenda-start-day "-3d")
    #+END_SRC
