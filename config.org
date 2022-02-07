@@ -55,6 +55,100 @@
     (setq system-time-locale "C")
   #+END_SRC
 
+** Frame title
+
+   #+BEGIN_SRC emacs-lisp
+     (setq frame-title-format
+	   '(:eval (concat
+		    (if (and buffer-file-name (buffer-modified-p)) "•")
+		    (buffer-name)
+		    (if buffer-file-name
+			(concat " (" (directory-file-name (abbreviate-file-name default-directory)) ")"))))
+	   )
+   #+END_SRC
+
+* Line number
+
+  #+BEGIN_SRC emacs-lisp
+    (require 'display-line-numbers)
+
+    (defcustom display-line-numbers-exempt-modes
+      '(vterm-mode eshell-mode shell-mode term-mode ansi-term-mode)
+      "Major modes on which to disable line numbers."
+      :group 'display-line-numbers
+      :type 'list
+      :version "green")
+
+    (defun display-line-numbers--turn-on ()
+      "Turn on line numbers except for certain major modes.
+    Exempt major modes are defined in `display-line-numbers-exempt-modes'."
+      (unless (or (minibufferp)
+		  (member major-mode display-line-numbers-exempt-modes))
+	(display-line-numbers-mode)))
+
+    (global-display-line-numbers-mode)
+  #+END_SRC
+
+* Mode line format
+
+  #+BEGIN_SRC emacs-lisp
+    (setq-default mode-line-format
+		  (list
+		   ;; day and time
+		   '(:eval (propertize (format-time-string " %b %d %H:%M ")
+				       'face 'font-lock-builtin-face))
+
+
+		   '(:eval (propertize (substring vc-mode 5)
+				       'face 'font-lock-comment-face))
+
+		   ;; the buffer name; the file name as a tool tip
+		   '(:eval (propertize " %b "
+				       'face
+				       (let ((face (buffer-modified-p)))
+					 (if face 'font-lock-warning-face
+					   'font-lock-type-face))
+				       'help-echo (buffer-file-name)))
+
+		   ;; line and column
+		   " (" ;; '%02' to set to 2 chars at least; prevents flickering
+		   (propertize "%02l" 'face 'font-lock-keyword-face) ","
+		   (propertize "%02c" 'face 'font-lock-keyword-face)
+		   ") "
+
+		   " [" ;; insert vs overwrite mode, input-method in a tooltip
+		   '(:eval (propertize (if overwrite-mode "Overwrite" "Insert")
+				       'face 'font-lock-preprocessor-face
+				       'help-echo (concat "Buffer is in "
+							  (if overwrite-mode "overwrite" "insert") " mode")))
+
+		   ;; was this buffer modified since the last save?
+		   '(:eval (when (buffer-modified-p)
+			     (concat ","  (propertize "Modified"
+						      'face 'font-lock-warning-face
+						      'help-echo "Buffer has been modified"))))
+
+		   ;; is this buffer read-only?
+		   '(:eval (when buffer-read-only
+			     (concat ","  (propertize "Read-only"
+						      'face 'font-lock-type-face
+						      'help-echo "Buffer is read-only"))))  
+		   "] "
+
+		   ;; spaces to align right
+		   '(:eval (propertize
+		    " " 'display
+		    `((space :align-to (- (+ right right-fringe right-margin)
+					  ,(+ 3 (string-width mode-name)))))))
+
+		   ;(propertize org-mode-line-string 'face '(:foreground "#5DD8FF"))
+
+		   ;; the current major mode
+		   (propertize " %m " 'face 'font-lock-string-face)
+		   ;;minor-mode-alist
+		   ))
+  #+END_SRC
+   
 * Startup performance
   #+BEGIN_SRC emacs-lisp
     ;; The default is 800 kilobytes.  Measured in bytes.
