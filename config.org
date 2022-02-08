@@ -55,6 +55,12 @@
     (setq system-time-locale "C")
   #+END_SRC
 
+** Disable truncate line
+
+   #+BEGIN_SRC emacs-lisp
+     (setq truncate-lines nil)
+   #+END_SRC
+
 ** Frame title
 
    #+BEGIN_SRC emacs-lisp
@@ -239,6 +245,7 @@
 		   (sequence "WAITING(w@/!)" "HOLD(h@/!)" "|" "CANCELLED(c@/!)"))))
      ;; Cannot set a headline to `DONE` if children aren't `DONE`.
      (setq-default org-enforce-to-dependencies t)
+     (setq org-log-done 'time)
    #+END_SRC
 
 ** Week-agenda view
