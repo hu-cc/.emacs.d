@@ -226,10 +226,6 @@
   (use-package which-key
     :diminish
     :hook (after-init . which-key-mode))
-
-  ;; popwin
-  (use-package popwin
-    :hook (after-init . popwin-mode))
 #+END_SRC
 
 ** lang
