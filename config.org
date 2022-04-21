@@ -1,257 +1,316 @@
 #+STARTUP: content
 
-* Theme
-  #+BEGIN_SRC emacs-lisp
-    (use-package zenburn-theme
-     :ensure t
-     :config
-     (load-theme 'zenburn t))
-  #+END_SRC
+* General
 
-* Font
-  #+BEGIN_SRC emacs-lisp
-    (set-face-attribute 'default nil :font "Cascadia Code" :height 110)
-;    (set-fontset-font t 'unicode "Symbol" nil 'prepend)
-    (set-fontset-font t '(#x4e00 . #x9fff) "LXGW WenKai")
-  #+END_SRC
+#+BEGIN_SRC emacs-lisp
+  ;; dont show the startup screen
+  (setq inhibit-startup-screen t)
 
-* General Configuration
+  ;; disable toolbar, menu bar, scroll bar
+  (tool-bar-mode -1)
+  (menu-bar-mode -1)
+  (scroll-bar-mode -1)
+  (tooltip-mode -1)
 
-** Maximize the Emacs Frame on Startup
-   #+BEGIN_SRC emacs-lisp
-     (add-hook 'emacs-startup-hook 'toggle-frame-maximized)
-   #+END_SRC
+  ;; disable bell
+  (setq ring-bell-function 'ignore)
 
-** Do not show the startup screen
-  #+BEGIN_SRC emacs-lisp
-    (setq inhibit-startup-screen t)
-  #+END_SRC
-  
-** Disable too bar, menu bar, scroll bar
-  #+BEGIN_SRC emacs-lisp
-    (tool-bar-mode -1)
-    (menu-bar-mode -1)
-    (scroll-bar-mode -1)
-  #+END_SRC
+  ;; use short answers for yes/no ect
+  (setq use-short-answers t)
 
-** Highlight current line
-  #+BEGIN_SRC emacs-lisp
-    (global-hl-line-mode 1)
-  #+END_SRC
+  ;; make tab-width always 4
+  (setq-default tab-width 4)
+  ;; only use spaces instead of TAB, use C-q TAB to input the TAB char
+  (setq-default indent-tabs-mode nil)
 
-** Disable bell
-  #+BEGIN_SRC emacs-lisp
-    (setq ring-bell-function 'ignore)
-  #+END_SRC
-  
-** Set UTF-8 encoding
-  #+BEGIN_SRC emacs-lisp
-    (set-language-environment "UTF-8")
-    (prefer-coding-system 'utf-8)
-    (set-default-coding-systems 'utf-8)
-    (set-terminal-coding-system 'utf-8)
-    (set-keyboard-coding-system 'utf-8)
+  ;; auto-fill-mode, Help by command or variable name
+  (add-hook 'after-init-hook 'auto-fill-mode)
 
-    (setq system-time-locale "C")
-  #+END_SRC
+  ;; auto revert
+  ;; `global-auto-revert-mode' is provided by autorevert.el (builtin)
+  (add-hook 'after-init-hook 'global-auto-revert-mode)
 
-** Disable truncate line
+  ;; auto save to the visited file
+  (add-hook 'after-init-hook 'auto-save-visited-mode)
 
-   #+BEGIN_SRC emacs-lisp
-     (setq truncate-lines nil)
-   #+END_SRC
+  ;; Delete Behavior
+  ;; `delete-selection-mode' is provided by delsel.el (builtin)
+  ;; `delete-trailing-whitespace' is provided by simple.el (builtin)
+  (add-hook 'before-save-hook #'delete-trailing-whitespace)
+  (add-hook 'after-init-hook 'delete-selection-mode)
 
-** Frame title
+  ;; fido-mode
+  ;; `fido-mode' is provided by icomplete.el
+  (add-hook 'after-init-hook 'fido-vertical-mode)
 
-   #+BEGIN_SRC emacs-lisp
-     (setq frame-title-format
-	   '(:eval (concat
-		    (if (and buffer-file-name (buffer-modified-p)) "•")
-		    (buffer-name)
-		    (if buffer-file-name
-			(concat " (" (directory-file-name (abbreviate-file-name default-directory)) ")"))))
-	   )
-   #+END_SRC
+  ;; customized
+  (setq completions-detailed t
+        completions-format 'one-column)
 
-* Line number
+  ;; ibuffer
+  (defalias 'list-buffers 'ibuffer)
 
-  #+BEGIN_SRC emacs-lisp
-    (require 'display-line-numbers)
+  ;; minibuffer
+  (add-hook 'after-init-hook 'minibuffer-electric-default-mode)
 
-    (defcustom display-line-numbers-exempt-modes
-      '(vterm-mode eshell-mode shell-mode term-mode ansi-term-mode)
-      "Major modes on which to disable line numbers."
-      :group 'display-line-numbers
-      :type 'list
-      :version "green")
+  ;; modeline settings
+  ;; column number is useless in most time, but useful when debug code.
+  (add-hook 'after-init-hook 'column-number-mode)
+  (setq mode-line-compact t)
 
-    (defun display-line-numbers--turn-on ()
-      "Turn on line numbers except for certain major modes.
-    Exempt major modes are defined in `display-line-numbers-exempt-modes'."
-      (unless (or (minibufferp)
-		  (member major-mode display-line-numbers-exempt-modes))
-	(display-line-numbers-mode)))
+  ;; Prettify Symbols
+  ;; `global-prettify-symbols-mode' and `prettify-symbols-mode' are provided by prog-mode.el
+  (add-hook 'prog-mode-hook 'prettify-symbols-mode)
 
-    (global-display-line-numbers-mode)
-  #+END_SRC
+  ;; pulse the cursor line
+  (dolist (cmd '(recenter-top-bottom other-window))
+    (advice-add cmd :after
+                (lambda (&rest _) (pulse-momentary-highlight-one-line (point)))))
 
-* Mode line format
+  ;; global visual line mode
+  (add-hook 'after-init-hook 'global-visual-line-mode)
 
-  #+BEGIN_SRC emacs-lisp
-    (setq-default mode-line-format
-		  (list
-		   ;; day and time
-		   '(:eval (propertize (format-time-string " %b %d %H:%M ")
-				       'face 'font-lock-builtin-face))
+  ;; frame title
+  (setq frame-title-format
+        '(:eval (concat
+                 (buffer-name)
+                 (if buffer-file-name
+                     (concat " (" (directory-file-name (abbreviate-file-name default-directory)) ")"))))
+        )
+#+END_SRC
 
+** theme
 
-		   '(:eval (propertize (substring vc-mode 5)
-				       'face 'font-lock-comment-face))
+#+BEGIN_SRC emacs-lisp
+  (use-package zenburn-theme
+    :ensure t
+    :config
+    (load-theme 'zenburn t))
+#+END_SRC
 
-		   ;; the buffer name; the file name as a tool tip
-		   '(:eval (propertize " %b "
-				       'face
-				       (let ((face (buffer-modified-p)))
-					 (if face 'font-lock-warning-face
-					   'font-lock-type-face))
-				       'help-echo (buffer-file-name)))
+** font
 
-		   ;; line and column
-		   " (" ;; '%02' to set to 2 chars at least; prevents flickering
-		   (propertize "%02l" 'face 'font-lock-keyword-face) ","
-		   (propertize "%02c" 'face 'font-lock-keyword-face)
-		   ") "
+#+BEGIN_SRC emacs-lisp
+  (defun available-font (font-list)
+    "Get the first available font from FONT-LIST."
 
-		   " [" ;; insert vs overwrite mode, input-method in a tooltip
-		   '(:eval (propertize (if overwrite-mode "Overwrite" "Insert")
-				       'face 'font-lock-preprocessor-face
-				       'help-echo (concat "Buffer is in "
-							  (if overwrite-mode "overwrite" "insert") " mode")))
+    (catch 'font
+      (dolist (font font-list)
+        (if (member font (font-family-list))
+            (throw 'font font)))))
 
-		   ;; was this buffer modified since the last save?
-		   '(:eval (when (buffer-modified-p)
-			     (concat ","  (propertize "Modified"
-						      'face 'font-lock-warning-face
-						      'help-echo "Buffer has been modified"))))
+  (defvar cn-fonts-list '("黑体" "STHeiti" "微软雅黑" "文泉译微米黑")
+    "定义使用的中文字体候选列表.")
 
-		   ;; is this buffer read-only?
-		   '(:eval (when buffer-read-only
-			     (concat ","  (propertize "Read-only"
-						      'face 'font-lock-type-face
-						      'help-echo "Buffer is read-only"))))  
-		   "] "
+  (defvar en-fonts-list '("Cascadia Code" "Courier New" "Monaco" "Ubuntu Mono")
+    "定义使用的英文字体候选列表.")
 
-		   ;; spaces to align right
-		   '(:eval (propertize
-		    " " 'display
-		    `((space :align-to (- (+ right right-fringe right-margin)
-					  ,(+ 3 (string-width mode-name)))))))
+  (defvar emoji-fonts-list '("Apple Color Emoji" "Segoe UI Emoji" "Noto Color Emoji" "Symbola" "Symbol")
+    "定义使用Emoji字体候选列表.")
 
-		   ;(propertize org-mode-line-string 'face '(:foreground "#5DD8FF"))
+  ;;;###autoload
+  (defun font-setup ()
+    "Font setup."
 
-		   ;; the current major mode
-		   (propertize " %m " 'face 'font-lock-string-face)
-		   ;;minor-mode-alist
-		   ))
-  #+END_SRC
-   
-* Startup performance
-  #+BEGIN_SRC emacs-lisp
-    ;; The default is 800 kilobytes.  Measured in bytes.
-    (setq gc-cons-threshold (* 50 1000 1000))
+    (interactive)
+    (let* ((cf (available-font cn-fonts-list))
+           (ef (available-font en-fonts-list))
+           (em (available-font emoji-fonts-list)))
+      (when ef
+        (dolist (face '(default fixed-pitch fixed-pitch-serif variable-pitch))
+          (set-face-attribute face nil :family ef)))
+      (when em
+        (set-fontset-font t 'emoji em))
+      (when cf
+        (dolist (charset '(kana han cjk-misc bopomofo))
+          (set-fontset-font t charset cf))
+        (setq face-font-rescale-alist
+              (mapcar (lambda (item) (cons item 1.2)) `(,cf ,em))))))
 
-    ;; Profile emacs startup
-    (add-hook 'emacs-startup-hook
-	      (lambda ()
-		(message "*** Emacs loaded in %s with %d garbage collections."
-			 (format "%.2f seconds"
-				 (float-time
-				  (time-subtract after-init-time before-init-time)))
-			 gcs-done)))
-  #+END_SRC
-  
-* Functionality
+  (font-setup)
+#+END_SRC
 
-** Disable backups and auto-saves
-   #+BEGIN_SRC emacs-lisp
-     (setq make-backup-files nil)
-     (setq auto-save-default nil)
-   #+END_SRC
+** system
 
-** Change yes-or-no questions into y-or-n questions
-   #+BEGIN_SRC emacs-lisp
-   (defalias 'yes-or-no-p 'y-or-n-p)
-   #+END_SRC
+#+BEGIN_SRC emacs-lisp
+  ;; system-coding
+  (prefer-coding-system 'utf-8)
 
-** which-key
+  (setq auto-window-vscroll nil
+        help-window-select t
+        inhibit-startup-screen t	   ; disable the startup screen splash
+        inhibit-default-init t
+        initial-major-mode 'fundamental-mode
+        ;; initial-scratch-message nil
+        make-backup-files nil             ; disable backup file
+        next-line-add-newlines nil
+        read-process-output-max (* 64 1024)
+        scroll-step 1
+        scroll-conservatively 10000
+        scroll-preserve-screen-position t
+        scroll-up-aggressively 0.01
+        scroll-down-aggressively 0.01
+        visible-bell nil)
 
-  #+BEGIN_SRC emacs-lisp
-    (use-package which-key
-      :ensure t
-      :config
-      (which-key-mode))
-  #+END_SRC
+  (if (fboundp 'pixel-scroll-precision-mode)
+      (pixel-scroll-precision-mode)
+    (pixel-scroll-mode))
+#+END_SRC
 
-* Dired
-  [[https://stackoverflow.com/questions/18823742/in-emacs-24-3-1-on-windows-7-how-can-i-group-directories-first-in-dired][link]]
-  #+BEGIN_SRC emacs-lisp
-    (setq ls-lisp-dirs-first t)
-    ; hide the link count, user, and group columns - default is '(links uid gid)
-    (setq ls-lisp-verbosity nil)
-    ; use ISO dates (the first is for recent dates, second for old dates)
-    (setq ls-lisp-format-time-list '("%Y-%m-%d %H:%M" "%Y-%m-%d %H:%M"))
-    (setq ls-lisp-use-localized-time-format t)
-  #+END_SRC
-  
-* Slime
-  
-  #+BEGIN_SRC emacs-lisp
-    (load (expand-file-name "C:/Users/yawl2u/quicklisp/slime-helper.el"))
-    (setq inferior-lisp-program "sbcl")
-  #+END_SRC
-  
-* Git integration
+** platform
 
-** magit
-   #+BEGIN_SRC emacs-lisp
-     (use-package magit
-       :ensure t
-       :config
-       :bind (("C-x g" . magit-status)
-	      ("C-x C-g" . magit-status)))
-   #+END_SRC
+#+BEGIN_SRC emacs-lisp
+  (defvar os--windows (memq system-type '(ms-dos windows-nt cygwin)))
+  (defvar os--macos (eq system-type 'darwin))
 
-* Org
+  (cond
+   (os--windows
+    ;; fix the issue on Windows
+    (setq buffer-file-coding-system 'utf-8)
+    (when (boundp 'w32-get-true-file-attributes)
+      (setq w32-get-true-file-attributes nil
+            w32-pipe-read-delay 0
+            w32-pipe-buffer-size (* 64 1024))))
+   (os--macos
+    ;; <macOS> Command -> Meta, Option -> Super
+    (setq mac-command-modifier 'meta
+          mac-option-modifier 'super
+          ns-use-native-fullscreen t))
+   (t nil))
 
-** Activate some Org commands
-   #+BEGIN_SRC emacs-lisp
-     (add-to-list 'auto-mode-alist '("\\.org\\'" . org-mode))
-     (global-set-key (kbd "C-c a") #'org-agenda)
-     (global-set-key (kbd "C-c c") #'org-capture)
-     (global-set-key (kbd "C-c l") #'org-store-link)
-   #+END_SRC
+  ;; solve the Chinese paste issue
+  ;; let Emacs auto-guess the selection coding according to the Windows/system settings
+  (unless os--windows
+    (set-selection-coding-system 'utf-8))
+#+END_SRC
 
-** Default driectories
-   #+BEGIN_SRC emacs-lisp
-     (setq org-directory (expand-file-name "D:/OneDrive/yawl2u/org"))
-     (setq org-default-notes-file (concat org-directory "/default.org"))
-     (setq org-agenda-files '("D:/OneDrive/yawl2u/org"))
-   #+END_SRC
+* Plugins
 
-** "TODO" keywords
-   #+BEGIN_SRC emacs-lisp
-     (setq org-todo-keywords
-	   (quote ((sequence "TODO(t)" "NEXT(n)" "|" "DONE(d)")
-		   (sequence "WAITING(w@/!)" "HOLD(h@/!)" "|" "CANCELLED(c@/!)"))))
-     ;; Cannot set a headline to `DONE` if children aren't `DONE`.
-     (setq-default org-enforce-to-dependencies t)
-     (setq org-log-done 'time)
-   #+END_SRC
+#+BEGIN_SRC emacs-lisp
+  ;; Settings for company, auto-complete for texting, coding, etc.
+  (use-package company
+    :diminish "Cmp"
+    :hook (after-init . global-company-mode)
+    :config (setq company-minimum-prefix-length 1
+                  company-show-quick-access t))
 
-** Week-agenda view
-   a week view spanning the current day. [[https://stackoverflow.com/questions/32423127/how-to-view-the-next-days-in-org-modes-agenda][link]]
-   #+BEGIN_SRC emacs-lisp
-     (setq org-agenda-span 10
-	   org-agenda-start-on-weekday nil
-	   org-agenda-start-day "-3d")
-   #+END_SRC
+  ;; ctrlf, good isearch alternative
+  (use-package ctrlf
+    :hook (after-init . ctrlf-mode))
+
+  ;; crux, a collection of many useful extensions/commands
+  ;; without key-binding you can use
+  ;; C-a for its original definition
+  ;; M-m to the indentation of current line
+  ;; C-M-<ARROW> for duplicate lines
+  ;; crux commands? Pls use M-x.
+  (use-package crux)
+
+  ;; info-colors, make the info manual as colorful
+  (use-package info-colors
+    :hook (Info-selection . info-colors-fontify-node))
+
+  ;; neotree, file tree manager
+  (use-package neotree
+    :commands (neo-buffer--lock-width neo-buffer--unlock-width)
+    :config (setq neo-autorefresh t
+                  neo-theme 'nerd
+                  neo-click-changes-root t
+                  neo-smart-open t)
+    :bind ("<f8>" . neotree-toggle))
+
+  ;; popwin
+  (use-package popwin
+    :hook (after-init . popwin-mode))
+
+  ;; Settings for which-key - suggest next key
+  (use-package which-key
+    :diminish
+    :hook (after-init . which-key-mode))
+
+  ;; popwin
+  (use-package popwin
+    :hook (after-init . popwin-mode))
+#+END_SRC
+
+** lang
+
+#+BEGIN_SRC emacs-lisp
+
+  ;; Common features when programming
+  (add-hook 'prog-mode-hook
+            (lambda ()
+              (electric-layout-mode)
+              (electric-pair-mode)
+              (hs-minor-mode)
+              (display-line-numbers-mode)))
+
+  ;; Flymake
+  (use-package flymake
+    :hook (prog-mode . flymake-mode)
+    :config
+    (global-set-key (kbd "M-n") #'flymake-goto-next-error)
+    (global-set-key (kbd "M-p") #'flymake-goto-prev-error))
+
+  ;; cc-mode
+  (add-hook 'c-mode-common-hook 'c-toggle-auto-hungry-state)
+
+  ;; Rainbow delimiters
+  (use-package rainbow-delimiters
+    :ensure t
+    :hook (prog-mode . rainbow-delimiters-mode))
+  (use-package highlight-parentheses
+    :diminish
+    :hook (prog-mode . highlight-parentheses-mode))
+
+  ;; Yasnippet
+  (use-package yasnippet
+    :diminish yas-minor-mode
+    :hook (prog-mode . yas-minor-mode)
+    :config (yas-reload-all)
+    :bind ("M-o" . yas-expand))
+  (use-package yasnippet-snippets
+    :diminish)
+
+  ;; Program Useful text/config files
+  (use-package json-mode)
+  (use-package markdown-mode)
+  (use-package protobuf-mode)
+  (use-package yaml-mode)
+
+  (use-package eglot
+    :hook ((c-mode
+            c++-mode
+            go-mode
+            js-mode
+            web-mode) . eglot-ensure)
+    :bind (("C-c e f" . #'eglot-format)
+           ("C-c e a" . #'eglot-code-actions)
+           ("C-c e i" . #'eglot-code-action-organize-imports)
+           ("C-c e q" . #'eglot-code-action-quickfix))
+    :config
+    ;; (setq eglot-ignored-server-capabilities '(:documentHighlightProvider))
+    (add-to-list 'eglot-server-programs '(web-mode "vls"))
+    (defun eglot-actions-before-save()
+      (add-hook 'before-save-hook
+                (lambda ()
+                  (call-interactively #'eglot-format)
+                  (call-interactively #'eglot-code-action-organize-imports))))
+    (add-hook 'eglot--managed-mode-hook #'eglot-actions-before-save))
+
+  (use-package go-mode)
+
+  ;; use C-j to expand emmet
+  (use-package emmet-mode
+    :hook ((web-mode css-mode) . emmet-mode))
+
+  (use-package web-mode
+    :init
+    ;; use web-mode to handle vue/html files
+    (add-to-list 'auto-mode-alist '("\\.html\\'" . web-mode))
+    (add-to-list 'auto-mode-alist '("\\.vue\\'" . web-mode))
+    :config
+    (setq web-mode-enable-current-element-highlight t))
+
+  (use-package typescript-mode)
+#+END_SRC
