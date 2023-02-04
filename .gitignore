@@ -3,3 +3,4 @@ config.el
 elpa/
 history
 /server/
+/transient/
