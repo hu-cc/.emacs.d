@@ -2,10 +2,10 @@
 
 ;; For speed up the startup, please do NOT forget reset it to a reasonable
 ;; value after Emacs finishes loading, or it may cause freezes.
-;; 100 MB is appropriate for a 16 GB machine — won't GC too often.
+;; 256 MB — 16 GB machine can afford fewer GC pauses.
 (setq gc-cons-threshold most-positive-fixnum)
 (add-hook 'emacs-startup-hook
-          #'(lambda () (setq gc-cons-threshold (* 100 1024 1024))))
+          #'(lambda () (setq gc-cons-threshold (* 256 1024 1024))))
 
 ;; Prevent unwanted runtime compilation for native-comp users
 (setq inhibit-automatic-native-compilation t)
@@ -38,6 +38,9 @@
 ;; Reduce file-system scanning overhead on Windows: only look for .elc and .el
 (setq load-suffixes '(".elc" ".el")
       load-file-rep-suffixes '(""))
+
+;; Skip expensive file-attribute columns on Windows (massive stat speedup).
+(setq w32-get-true-file-attributes nil)
 
 ;; Startup timer for performance diagnostics
 (add-hook 'emacs-startup-hook

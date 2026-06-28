@@ -43,7 +43,6 @@
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(mini-frame-show-parameters '((top . 10) (width . 0.7) (left . 0.5)))
- '(org-agenda-files nil)
  '(package-selected-packages nil))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
