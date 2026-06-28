@@ -1,0 +1,438 @@
+#+STARTUP: show2levels
+
+* General
+
+#+BEGIN_SRC emacs-lisp
+  (tool-bar-mode -1)
+  (menu-bar-mode -1)
+  (scroll-bar-mode -1)
+  (tooltip-mode -1)
+  (blink-cursor-mode 0)
+
+  (setq mouse-wheel-scroll-amount '(1 ((shift) . 1) ((control) . nil)))
+  (setq mouse-wheel-progressive-speed nil)
+
+  (setq display-line-numbers-type 'relative)
+  (global-display-line-numbers-mode)
+
+  ;; disable bell
+  (setq ring-bell-function 'ignore)
+
+  ;; use short answers for yes/no ect
+  (setq use-short-answers t)
+
+  ;; auto revert
+  ;; `global-auto-revert-mode' is provided by autorevert.el (builtin)
+  (add-hook 'after-init-hook 'global-auto-revert-mode)
+  (setq global-auto-revert-non-file-buffers t)
+
+  ;; auto save to the visited file
+  (add-hook 'after-init-hook 'auto-save-visited-mode)
+
+  ;; ibuffer
+  (defalias 'list-buffers 'ibuffer)
+  ;; minibuffer
+  (add-hook 'after-init-hook 'minibuffer-electric-default-mode)
+
+  ;; modeline settings
+  ;; column number is useless in most time, but useful when debug code.
+  (add-hook 'after-init-hook 'column-number-mode)
+
+  ;; Prettify Symbols
+  ;; `global-prettify-symbols-mode' and `prettify-symbols-mode' are provided by prog-mode.el
+  (add-hook 'prog-mode-hook 'prettify-symbols-mode)
+
+  ;; pulse the cursor line
+  (dolist (cmd '(recenter-top-bottom other-window))
+    (advice-add cmd :after
+                (lambda (&rest _) (pulse-momentary-highlight-one-line (point)))))
+
+  ;; global visual line mode
+  (add-hook 'after-init-hook 'global-visual-line-mode)
+
+  ;; frame title
+  (setq frame-title-format
+        '(:eval (concat
+                 (buffer-name)
+                 (if buffer-file-name
+                     (concat " (" (directory-file-name (abbreviate-file-name default-directory)) ")"))))
+        )
+
+  (setq system-time-locale "C")
+
+  (setq-default indent-tabs-mode nil)
+  (setq tab-width 8)
+  (defvaralias 'c-basic-offset 'tab-width)
+#+END_SRC
+
+* Theme
+
+#+BEGIN_SRC emacs-lisp
+  (use-package zenburn-theme
+    :config
+    (load-theme 'zenburn t))
+#+END_SRC
+
+** mode-line
+#+BEGIN_SRC emacs-lisp
+(setq-default mode-line-format
+      '("%e"
+        " ["
+         (:propertize "%b" face (:inherit font-lock-keyword-face :weight bold))
+        " ] --- "
+        
+         (:propertize which-func-format face (:inherit font-lock-function-name-face))
+
+         (:eval (propertize " " 'display '((space :align-to (- right 15)))))
+
+         " %l:%c "
+        
+         mode-line-end-spaces))
+
+#+END_SRC
+
+* Font
+
+#+BEGIN_SRC emacs-lisp
+  (set-face-attribute 'default nil :font "Maple Mono Normal NF CN" :height 110)
+#+END_SRC
+
+* System
+
+#+BEGIN_SRC emacs-lisp
+  ;; system-coding
+  (prefer-coding-system 'utf-8)
+
+  (setq auto-window-vscroll nil
+        help-window-select t
+        inhibit-startup-screen t	   ; disable the startup screen splash
+        inhibit-default-init t
+        initial-major-mode 'fundamental-mode
+        ;; initial-scratch-message nil
+        make-backup-files nil             ; disable backup file
+        next-line-add-newlines nil
+        read-process-output-max (* 1024 1024)
+        scroll-step 1
+        scroll-conservatively 10000
+        scroll-preserve-screen-position t
+        scroll-up-aggressively 0.01
+        scroll-down-aggressively 0.01
+        visible-bell nil)
+
+  (setq create-lockfiles nil)
+
+  (if (fboundp 'pixel-scroll-precision-mode)
+      (pixel-scroll-precision-mode)
+    (pixel-scroll-mode))
+
+  (when window-system
+    (set-frame-size
+     (selected-frame)
+     80 40))
+#+END_SRC
+
+* Plugins
+
+** Basic
+#+BEGIN_SRC emacs-lisp
+  ;; ctrlf, good isearch alternative
+  (use-package ctrlf
+    :hook (after-init . ctrlf-mode))
+
+  ;; info-colors, make the info manual as colorful
+  (use-package info-colors
+    :hook (Info-selection . info-colors-fontify-node))
+
+  ;; Enable Vertico.
+  (use-package vertico
+    :custom
+     (vertico-scroll-margin 0) ;; Different scroll margin
+     (vertico-count 3) ;; Show more candidates
+     (vertico-resize t) ;; Grow and shrink the Vertico minibuffer
+     (vertico-cycle t) ;; Enable cycling for `vertico-next/previous'
+    :init
+    (vertico-mode))
+
+  ;; Persist history over Emacs restarts. Vertico sorts by history position.
+  (use-package savehist
+    :init
+    (savehist-mode))
+
+  ;; Emacs minibuffer configurations.
+  (use-package emacs
+    :custom
+    ;; Enable context menu. `vertico-multiform-mode' adds a menu in the minibuffer
+    ;; to switch display modes.
+    (context-menu-mode t)
+    ;; Support opening new minibuffers from inside existing minibuffers.
+    (enable-recursive-minibuffers t)
+    ;; Hide commands in M-x which do not work in the current mode.  Vertico
+    ;; commands are hidden in normal buffers. This setting is useful beyond
+    ;; Vertico.
+    (read-extended-command-predicate #'command-completion-default-include-p)
+    ;; Do not allow the cursor in the minibuffer prompt
+    (minibuffer-prompt-properties
+     '(read-only t cursor-intangible t face minibuffer-prompt)))
+
+  (use-package orderless
+    :custom
+    ;; Configure a custom style dispatcher (see the Consult wiki)
+    ;; (orderless-style-dispatchers '(+orderless-consult-dispatch orderless-affix-dispatch))
+    ;; (orderless-component-separator #'orderless-escapable-split-on-space)
+    (completion-styles '(orderless basic))
+    (completion-category-overrides '((file (styles partial-completion))))
+    (completion-category-defaults nil) ;; Disable defaults, use our settings
+    (completion-pcm-leading-wildcard t)) ;; Emacs 31: partial-completion behaves like substring
+
+  (use-package consult
+    ;; Replace bindings. Lazily loaded due by `use-package'.
+    :bind (;; C-c bindings (mode-specific-map)
+           ("C-c h" . consult-history)
+           ("C-c m" . consult-mode-command)
+           ("C-c k" . consult-kmacro)
+           ;; C-x bindings (ctl-x-map)
+           ("C-x M-:" . consult-complex-command)     ;; orig. repeat-complex-command
+           ("C-x b" . consult-buffer)                ;; orig. switch-to-buffer
+           ("C-x 4 b" . consult-buffer-other-window) ;; orig. switch-to-buffer-other-window
+           ("C-x 5 b" . consult-buffer-other-frame)  ;; orig. switch-to-buffer-other-frame
+           ("C-x r b" . consult-bookmark)            ;; orig. bookmark-jump
+           ("C-x p b" . consult-project-buffer)      ;; orig. project-switch-to-buffer
+           ;; Custom M-# bindings for fast register access
+           ("M-#" . consult-register-load)
+           ("M-'" . consult-register-store)          ;; orig. abbrev-prefix-mark (unrelated)
+           ("C-M-#" . consult-register)
+           ;; Other custom bindings
+           ("M-y" . consult-yank-pop)                ;; orig. yank-pop
+           ;; M-g bindings (goto-map)
+           ("M-g e" . consult-compile-error)
+           ("M-g f" . consult-flymake)               ;; Alternative: consult-flycheck
+           ("M-g g" . consult-goto-line)             ;; orig. goto-line
+           ("M-g M-g" . consult-goto-line)           ;; orig. goto-line
+           ("M-g o" . consult-outline)               ;; Alternative: consult-org-heading
+           ("M-g m" . consult-mark)
+           ("M-g k" . consult-global-mark)
+           ("M-g i" . consult-imenu)
+           ("M-g I" . consult-imenu-multi)
+           ;; M-s bindings (search-map)
+           ("M-s d" . consult-find)
+           ("M-s D" . consult-locate)
+           ("M-s g" . consult-grep)
+           ("M-s G" . consult-git-grep)
+           ("M-s r" . consult-ripgrep)
+           ("M-s l" . consult-line)
+           ("M-s L" . consult-line-multi)
+           ("M-s k" . consult-keep-lines)
+           ("M-s u" . consult-focus-lines)
+           ;; Isearch integration
+           ("M-s e" . consult-isearch-history)
+           :map isearch-mode-map
+           ("M-e" . consult-isearch-history)         ;; orig. isearch-edit-string
+           ("M-s e" . consult-isearch-history)       ;; orig. isearch-edit-string
+           ("M-s l" . consult-line)                  ;; needed by consult-line to detect isearch
+           ("M-s L" . consult-line-multi)            ;; needed by consult-line to detect isearch
+           ;; Minibuffer history
+           :map minibuffer-local-map
+           ("M-s" . consult-history)                 ;; orig. next-matching-history-element
+           ("M-r" . consult-history))                ;; orig. previous-matching-history-element
+
+    ;; Enable automatic preview at point in the *Completions* buffer. This is
+    ;; relevant when you use the default completion UI.
+    :hook (completion-list-mode . consult-preview-at-point-mode)
+
+    ;; The :init configuration is always executed (Not lazy)
+    :init
+
+    ;; Optionally configure the register formatting. This improves the register
+    ;; preview for `consult-register', `consult-register-load',
+    ;; `consult-register-store' and the Emacs built-ins.
+    (setq register-preview-delay 0.5
+          register-preview-function #'consult-register-format)
+
+    ;; Optionally tweak the register preview window.
+    ;; This adds thin lines, sorting and hides the mode line of the window.
+    (advice-add #'register-preview :override #'consult-register-window)
+
+    ;; Use Consult to select xref locations with preview
+    (setq xref-show-xrefs-function #'consult-xref
+          xref-show-definitions-function #'consult-xref)
+
+    ;; Configure other variables and modes in the :config section,
+    ;; after lazily loading the package.
+    :config
+
+    ;; Optionally configure preview. The default value
+    ;; is 'any, such that any key triggers the preview.
+    ;; (setq consult-preview-key 'any)
+    ;; (setq consult-preview-key (kbd "M-."))
+    ;; (setq consult-preview-key (list (kbd "<S-down>") (kbd "<S-up>")))
+    ;; For some commands and buffer sources it is useful to configure the
+    ;; :preview-key on a per-command basis using the `consult-customize' macro.
+    (consult-customize
+     consult-theme :preview-key '(:debounce 0.2 any)
+     consult-ripgrep consult-git-grep consult-grep
+     consult-bookmark consult-recent-file consult-xref
+     ;; :preview-key (kbd "M-.")
+     :preview-key '(:debounce 0.4 any))
+
+    ;; Optionally configure the narrowing key.
+    ;; Both < and C-+ work reasonably well.
+    (setq consult-narrow-key "<") ;; (kbd "C-+")
+
+    ;; Optionally make narrowing help available in the minibuffer.
+    ;; You may want to use `embark-prefix-help-command' or which-key instead.
+    ;; (define-key consult-narrow-map (vconcat consult-narrow-key "?") #'consult-narrow-help)
+
+    ;; By default `consult-project-function' uses `project-root' from project.el.
+    ;; Optionally configure a different project root function.
+    ;; There are multiple reasonable alternatives to chose from.
+    ;;;; 1. project.el (the default)
+    ;; (setq consult-project-function #'consult--default-project--function)
+    ;;;; 2. projectile.el (projectile-project-root)
+    ;; (autoload 'projectile-project-root "projectile")
+    ;; (setq consult-project-function (lambda (_) (projectile-project-root)))
+    ;;;; 3. vc.el (vc-root-dir)
+    ;; (setq consult-project-function (lambda (_) (vc-root-dir)))
+    ;;;; 4. locate-dominating-file
+    ;; (setq consult-project-function (lambda (_) (locate-dominating-file "." ".git")))
+  )
+#+END_SRC
+
+** Code
+
+#+BEGIN_SRC emacs-lisp
+  (use-package eglot
+    :ensure nil
+    :hook
+    ((c-mode c++-mode c-ts-mode c++-ts-mode) . eglot-ensure)
+    ((c-mode c++-mode c-ts-mode c++-ts-mode) . (lambda () (add-hook 'before-save-hook #'eglot-format-buffer nil t)))
+     
+    :bind (:map eglot-mode-map
+                ("C-c r" . eglot-rename)
+                ("C-c f" . eglot-format-buffer)
+                ("C-c a" . eglot-code-actions))
+
+    :custom
+    ;; 统一管理服务器启动参数
+    (eglot-server-programs
+     `(((c-mode c++-mode c-ts-mode c++-ts-mode) .
+        ("clangd" 
+         "--header-insertion=never" 
+         "--fallback-style=Google" 
+         "--indent-width=4"
+         "--clang-tidy"))))
+      
+    (eglot-send-changes-idle-time 0.5)
+    (eldoc-idle-delay 0.5)
+    (eglot-connect-timeout 30))
+
+  (use-package corfu
+    :ensure t
+    :init
+    (global-corfu-mode)
+    :hook (corfu-mode . corfu-popupinfo-mode)
+    :custom
+    (corfu-cycle t)
+    (corfu-auto t)
+    (corfu-auto-prefix 2)
+    (corfu-auto-delay 0.1) ;; 稍微给 0.1s 延迟，防止手速太快时弹出闪烁
+    (corfu-popupinfo-delay '(0.5 . 0.2))
+    ;; 建议设置：在边界时允许使用分隔符，而不是直接退出
+    (corfu-quit-at-boundary 'separator) 
+    (corfu-quit-no-match t)
+    (corfu-preview-current nil) ;; 禁用当前预览，防止干扰输入
+    (corfu-preselect 'prompt))  ;; 默认选中第一个候选词
+
+  (use-package cape
+    :ensure t
+    :init
+    ;; 建议将 cape 挂载到特定 hook，确保 eglot 优先
+    (add-hook 'eglot-managed-mode-hook
+              (lambda ()
+                ;; 将 cape-file 放到补全列表后面，作为 eglot 的补充
+                (add-to-list 'completion-at-point-functions #'cape-file t)
+                (add-to-list 'completion-at-point-functions #'cape-dict t))))
+
+  (add-hook 'c-mode-common-hook
+          (lambda ()
+            (c-set-style "linux")
+            (subword-mode 1)
+            (hs-minor-mode 1)
+            (electric-pair-mode 1)
+            ;; 保存时自动格式化 (由 Eglot 提供)
+            (add-hook 'before-save-hook #'eglot-format-buffer nil t)))
+#+END_SRC
+
+* Magit
+
+#+BEGIN_SRC emacs-lisp
+  (use-package magit
+    :ensure t
+    :bind (("C-x g" . magit-status)))
+#+END_SRC
+
+* Org
+
+#+BEGIN_SRC emacs-lisp
+(add-to-list 'auto-mode-alist '("\\.org$" . org-mode))
+
+(global-set-key (kbd "C-c l") #'org-store-link)
+(global-set-key (kbd "C-c a") #'org-agenda)
+(global-set-key (kbd "C-c c") #'org-capture)
+
+;; Cannot set a headline to `DONE` if children aren't `DONE`
+(setq-default org-enforce-todo-dependencies t)
+
+(setq org-agenda-files
+      '("D:/OneDrive/note-taking/roam"
+        "D:/OneDrive/note-taking/daily"))
+(setq org-log-done 'time)
+(setq org-log-into-drawer t)
+
+(setq org-src-fontify-natively t)
+(setq org-src-tab-acts-natively t)
+(setq org-edit-src-content-indentation 0)
+
+(setq org-todo-keywords
+    '((sequence "TODO" "IN-PROGRESS" "WAITING" "|" "DONE" "CANCELED")))
+
+(use-package org-roam
+  :ensure t
+  :custom
+  (org-roam-directory
+   (file-truename "D:/OneDrive/note-taking/roam"))
+  :bind
+  (("C-c n l" . org-roam-buffer-toggle)
+   ("C-c n f" . org-roam-node-find)
+   ("C-c n i" . org-roam-node-insert)
+   ("C-c n c" . org-roam-capture)
+   ("C-c n g" . org-roam-graph))
+  :config
+  (org-roam-db-autosync-enable)
+  ;; org-roam-dailies: loaded lazily with org-roam
+  (require 'org-roam-dailies)
+  (setq org-roam-dailies-directory "D:/OneDrive/note-taking/daily/")
+  (global-set-key (kbd "C-c n d") #'org-roam-dailies-capture-today))
+
+(setq org-roam-capture-templates
+      '(("d" "default" plain "%?"
+         :if-new
+         (file+head
+          "%<%Y%m%d%H%M%S>-${slug}.org"
+          "#+title: ${title}\n#+date: %U\n\n")
+         :unnarrowed t)))
+
+(setq org-roam-db-location
+      (expand-file-name
+       "org-roam.db"
+       user-emacs-directory))
+
+(use-package websocket
+  :ensure t
+  :defer t
+  :after org-roam-ui)
+
+(use-package org-roam-ui
+  :ensure t
+  :after org-roam)
+#+END_SRC
+

@@ -1,0 +1,30 @@
+# Generated from config.org — the source of truth is config.org
+config.el
+
+# ELPA packages — reinstalled via package.el
+elpa/
+
+# Native compilation cache — machine-specific binaries
+eln-cache/
+
+# Auto-save files
+auto-save-list/
+*.elc
+
+# Emacs server socket
+server/
+
+# Transient (Magit dependency) history cache
+transient/
+
+# Org-mode caches
+org-persist/
+.org-id-locations
+
+# Org-roam database — rebuilt with org-roam-db-sync
+org-roam.db
+
+# Personal / runtime data
+bookmarks
+eshell/
+history
