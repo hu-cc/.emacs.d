@@ -44,10 +44,7 @@
  ;; If there is more than one, they won't work right.
  '(mini-frame-show-parameters '((top . 10) (width . 0.7) (left . 0.5)))
  '(org-agenda-files nil)
- '(package-selected-packages
-   '(cape consult corfu corfu-terminal ctrlf delight diminish eldoc-box
-          info-colors magit nano-modeline orderless org-roam
-          org-roam-ui vertico websocket zenburn-theme)))
+ '(package-selected-packages nil))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.

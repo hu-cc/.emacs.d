@@ -28,3 +28,8 @@ org-roam.db
 bookmarks
 eshell/
 history
+places
+
+# Package quickstart — auto-generated, machine-specific
+package-quickstart.el
+.cache/

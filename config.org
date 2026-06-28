@@ -9,6 +9,10 @@
   (tooltip-mode -1)
   (blink-cursor-mode 0)
 
+  ;; always use box cursor even in variable-pitch buffers
+  (setq-default cursor-type 'box)
+  (setq-default cursor-in-non-selected-windows 'hollow)
+
   (setq mouse-wheel-scroll-amount '(1 ((shift) . 1) ((control) . nil)))
   (setq mouse-wheel-progressive-speed nil)
 
@@ -63,6 +67,12 @@
   (setq-default indent-tabs-mode nil)
   (setq tab-width 8)
   (defvaralias 'c-basic-offset 'tab-width)
+
+  ;; Built-in quality-of-life modes
+  (winner-mode 1)           ; C-c <left>/<right> to undo/redo window layouts
+  (repeat-mode 1)            ; repeat commands with last key only (Emacs 28+)
+  (save-place-mode 1)        ; remember cursor position across sessions
+  (electric-pair-mode 1)     ; auto-pair brackets and quotes globally
 #+END_SRC
 
 * Theme
@@ -71,30 +81,27 @@
   (use-package zenburn-theme
     :config
     (load-theme 'zenburn t))
-#+END_SRC
 
-** mode-line
-#+BEGIN_SRC emacs-lisp
-(setq-default mode-line-format
-      '("%e"
-        " ["
-         (:propertize "%b" face (:inherit font-lock-keyword-face :weight bold))
-        " ] --- "
-        
-         (:propertize which-func-format face (:inherit font-lock-function-name-face))
-
-         (:eval (propertize " " 'display '((space :align-to (- right 15)))))
-
-         " %l:%c "
-        
-         mode-line-end-spaces))
-
+  ;; mini-modeline: move mode-line into the minibuffer row, saves space
+  (use-package mini-modeline
+    :ensure t
+    :config
+    (setq mini-modeline-l-format
+          '(:eval (propertize (format " %s%s " (buffer-name)
+                                      (if (buffer-modified-p) " ●" ""))
+                              'face 'mode-line-buffer-id)))
+    (setq mini-modeline-r-format
+          '(:eval (format " %s  " mode-name)))
+    (mini-modeline-mode 1))
 #+END_SRC
 
 * Font
 
 #+BEGIN_SRC emacs-lisp
   (set-face-attribute 'default nil :font "Maple Mono Normal NF CN" :height 110)
+  ;; mixed-pitch 正文使用的变宽字体（中英文阅读）
+  ;; 备选：Microsoft YaHei UI（Windows 自带）、Segoe UI、Noto Serif CJK SC
+  (set-face-attribute 'variable-pitch nil :font "Microsoft YaHei UI" :height 120)
 #+END_SRC
 
 * System
@@ -295,36 +302,70 @@
     ;;;; 4. locate-dominating-file
     ;; (setq consult-project-function (lambda (_) (locate-dominating-file "." ".git")))
   )
+
+  ;; Marginalia: rich annotations for minibuffer candidates
+  (use-package marginalia
+    :init
+    (marginalia-mode))
+
+  ;; Which-key: show available keybindings on partial input
+  (use-package which-key
+    :init
+    (which-key-mode))
+
+  ;; Embark: contextual actions on minibuffer candidates (C-. to act)
+  (use-package embark
+    :bind
+    (("C-." . embark-act)
+     ("C-;" . embark-dwim))
+    :config
+    (add-to-list 'display-buffer-alist
+                 '("\\`\\*Embark Collect \\(Live\\|Completions\\)\\*"
+                   (display-buffer-reuse-window display-buffer-in-direction)
+                   (direction . bottom)
+                   (window-height . fit-window-to-buffer))))
+
+  (use-package embark-consult
+    :after (embark consult)
+    :hook (embark-collect-mode . consult-preview-at-point-mode))
+
+  ;; kind-icon: coloured icons in Corfu & minibuffer completion
+  (use-package kind-icon
+    :ensure t
+    :after corfu
+    :config
+    (add-to-list 'corfu-margin-formatters #'kind-icon-margin-formatter))
+#+END_SRC
+
+** Writing
+
+#+BEGIN_SRC emacs-lisp
+  ;; jinx: spell checking via enchant-2
+  ;; NOTE: requires enchant-2 library installed on Windows (MSYS2: pacman -S enchant)
+  ;; Use M-x jinx-mode to enable manually instead of auto-hook to avoid font-lock issues
+  (use-package jinx
+    :ensure t
+    :defer t)
+
+  ;; mixed-pitch: variable-width font for prose, monospace for code blocks
+  (use-package mixed-pitch
+    :ensure t
+    :hook (org-mode . mixed-pitch-mode)
+    :config
+    ;; Force box cursor in org-mode, overriding Emacs' variable-pitch bar behaviour
+    (add-hook 'org-mode-hook
+              (lambda () (setq-local cursor-type 'box))
+              90)) ; depth 90 runs after mixed-pitch
+
+  ;; olivetti: centred distraction-free writing mode
+  (use-package olivetti
+    :ensure t
+    :bind ("<f8>" . olivetti-mode))
 #+END_SRC
 
 ** Code
 
 #+BEGIN_SRC emacs-lisp
-  (use-package eglot
-    :ensure nil
-    :hook
-    ((c-mode c++-mode c-ts-mode c++-ts-mode) . eglot-ensure)
-    ((c-mode c++-mode c-ts-mode c++-ts-mode) . (lambda () (add-hook 'before-save-hook #'eglot-format-buffer nil t)))
-     
-    :bind (:map eglot-mode-map
-                ("C-c r" . eglot-rename)
-                ("C-c f" . eglot-format-buffer)
-                ("C-c a" . eglot-code-actions))
-
-    :custom
-    ;; 统一管理服务器启动参数
-    (eglot-server-programs
-     `(((c-mode c++-mode c-ts-mode c++-ts-mode) .
-        ("clangd" 
-         "--header-insertion=never" 
-         "--fallback-style=Google" 
-         "--indent-width=4"
-         "--clang-tidy"))))
-      
-    (eglot-send-changes-idle-time 0.5)
-    (eldoc-idle-delay 0.5)
-    (eglot-connect-timeout 30))
-
   (use-package corfu
     :ensure t
     :init
@@ -345,10 +386,8 @@
   (use-package cape
     :ensure t
     :init
-    ;; 建议将 cape 挂载到特定 hook，确保 eglot 优先
-    (add-hook 'eglot-managed-mode-hook
+    (add-hook 'prog-mode-hook
               (lambda ()
-                ;; 将 cape-file 放到补全列表后面，作为 eglot 的补充
                 (add-to-list 'completion-at-point-functions #'cape-file t)
                 (add-to-list 'completion-at-point-functions #'cape-dict t))))
 
@@ -356,10 +395,12 @@
           (lambda ()
             (c-set-style "linux")
             (subword-mode 1)
-            (hs-minor-mode 1)
-            (electric-pair-mode 1)
-            ;; 保存时自动格式化 (由 Eglot 提供)
-            (add-hook 'before-save-hook #'eglot-format-buffer nil t)))
+            (hs-minor-mode 1)))
+
+  ;; Rainbow-delimiters: color parentheses by nesting depth
+  (use-package rainbow-delimiters
+    :ensure t
+    :hook (prog-mode . rainbow-delimiters-mode))
 #+END_SRC
 
 * Magit
@@ -434,5 +475,11 @@
 (use-package org-roam-ui
   :ensure t
   :after org-roam)
+
+;; org-transclusion: embed live copies of note content across files
+(use-package org-transclusion
+  :ensure t
+  :after org
+  :bind ("C-c t" . org-transclusion-mode))
 #+END_SRC
 
